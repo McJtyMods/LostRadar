@@ -63,7 +63,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
 
         Panel toplevel = positional().filledRectThickness(2);
         categoryList = Widgets.list(238, 12, 133, ySize - 53);
-        scanButton = Widgets.button(238, ySize - 40, 133, 15, "Scan")
+        scanButton = Widgets.button(238, ySize - 40, 133, 15, ComponentFactory.translatable("button.lostradar.scan").getString())
                 .event(() -> {
                     int selected = categoryList.getSelected();
                     if (selected >= 0) {
@@ -83,7 +83,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         ClientMapData.getData().setSearchString(category);
                     }
                 });
-        Button clearButton = Widgets.button(238, ySize - 22, 133, 15, "Clear").event(() -> {
+        Button clearButton = Widgets.button(238, ySize - 22, 133, 15, ComponentFactory.translatable("button.lostradar.clear").getString()).event(() -> {
             ClientMapData.getData().clearSearchResults();
             ClientMapData.getData().setSearchString("");
             Messages.sendToServer(new PacketStartSearch("", 0));
@@ -281,7 +281,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     }
 
     private Widget<Label> makeLine(MapPalette.PaletteEntry category) {
-        return Widgets.label(category.name());
+        return Widgets.label(ComponentFactory.translatable(category.translatableKey()).getString());
     }
 
     @Override
@@ -291,9 +291,9 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         scanButton.enabled(scanEnabled);
         int progress = data.getSearchProgress();
         if (progress >= 100) {
-            scanButton.text("Scan");
+            scanButton.text(ComponentFactory.translatable("button.lostradar.scan").getString());
         } else if (data.isPaused()) {
-            scanButton.text("Paused: " + progress + "%");
+            scanButton.text(ComponentFactory.translatable("lostradar.paused_scan", progress).getString() + "%");
         } else {
             scanButton.text(progress + "%");
         }
