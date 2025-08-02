@@ -1,0 +1,21 @@
+{
+  "itemGroup.lostradar": "失落的城市：雷达",
+  "lostradar.city": "城市",
+  "lostradar.highway": "高速公路",
+  "lostradar.buildings": "建筑",
+  "lostradar.center": "市中心",
+  "lostradar.library": "城镇图书馆",
+  "lostradar.shopping": "购物中心",
+  "lostradar.default": "未知建筑",
+  "lostradar.chunk.pos": "坐标：%s",
+  "lostradar.chunk.dist": "距离：%s",
+  "lostradar.notenoughenergy": "没有足够的能量进行搜索！",
+  "lostradar.energylow": "能量不足！",
+  "lostradar.paused_scan": "已暂停扫描：%d%%",
+  "item.lostradar.radar": "雷达",
+  "button.lostradar.scan": "扫描",
+  "button.lostradar.clear": "清空",
+  "message.lostradar.discovered.center": "你发现了市中心！",
+  "message.lostradar.discovered.library": "你发现了图书馆！",
+  "message.lostradar.discovered.shopping": "你发现了购物中心！"
+}
