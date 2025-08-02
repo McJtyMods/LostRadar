@@ -293,7 +293,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         if (progress >= 100) {
             scanButton.text(ComponentFactory.translatable("button.lostradar.scan").getString());
         } else if (data.isPaused()) {
-            scanButton.text(ComponentFactory.translatable("lostradar.paused_scan", progress).getString() + "%");
+            scanButton.text(ComponentFactory.translatable("lostradar.paused_scan", progress).getString());
         } else {
             scanButton.text(progress + "%");
         }

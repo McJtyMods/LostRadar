@@ -11,7 +11,7 @@
   "lostradar.chunk.dist": "距离：%s",
   "lostradar.notenoughenergy": "没有足够的能量进行搜索！",
   "lostradar.energylow": "没有能量！",
-  "lostradar.paused_scan": "暂停扫描：%d",
+  "lostradar.paused_scan": "暂停扫描：%d%%",
   "item.lostradar.radar": "雷达",
   "button.lostradar.scan": "扫描",
   "button.lostradar.clear": "清空",

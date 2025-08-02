@@ -11,7 +11,7 @@
   "lostradar.chunk.dist": "Distance %s",
   "lostradar.notenoughenergy": "Not enough energy to perform this search!",
   "lostradar.energylow": "No energy!",
-  "lostradar.paused_scan": "Paused: %d",
+  "lostradar.paused_scan": "Paused: %d%%",
   "item.lostradar.radar": "Radar",
   "button.lostradar.scan": "Scan",
   "button.lostradar.clear": "Clear",
