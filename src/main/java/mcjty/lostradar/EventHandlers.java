@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -73,9 +74,11 @@ public class EventHandlers {
     public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         PaletteCache.cleanup();
         ServerMapData.getData(event.getEntity().level()).cleanup();
-        if (event.getEntity().level().isClientSide) {
-            ClientMapData.getData().cleanup();
-        }
+    }
+
+    @SubscribeEvent
+    public void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        ClientMapData.getData().cleanup();
     }
 
     @SubscribeEvent
