@@ -68,6 +68,8 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
     private Map<UUID, PlayerSearch> searches = new HashMap<>();
 
     public void cleanup() {
+        mapChunks.clear();
+        todo.clear();
         searches.clear();
     }
 
