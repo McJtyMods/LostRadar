@@ -1,14 +1,15 @@
 package mcjty.lostradar;
 
 import mcjty.lostradar.commands.ModCommands;
-import mcjty.lostradar.data.*;
+import mcjty.lostradar.data.PaletteCache;
+import mcjty.lostradar.data.PlayerMapKnowledge;
+import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
+import mcjty.lostradar.data.ServerMapData;
 import mcjty.lostradar.setup.ModSetup;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -74,11 +75,6 @@ public class EventHandlers {
     public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         PaletteCache.cleanup();
         ServerMapData.getData(event.getEntity().level()).cleanup();
-    }
-
-    @SubscribeEvent
-    public void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
-        ClientMapData.getData().cleanup();
     }
 
     @SubscribeEvent

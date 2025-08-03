@@ -1,3 +1,6 @@
+1.0.5:
+- Fixed crash on dedicated server
+
 1.0.4:
 - Fixed clientside cleanup of cached map data when player leaves the world
 

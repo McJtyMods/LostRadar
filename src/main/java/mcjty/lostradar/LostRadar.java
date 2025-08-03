@@ -6,6 +6,7 @@ import mcjty.lostradar.setup.ModSetup;
 import mcjty.lostradar.setup.Registration;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -37,6 +38,9 @@ public class LostRadar {
         Registration.register(bus);
         bus.addListener(setup::init);
         bus.addListener(CustomRegistries::onDataPackRegistry);
+        if (dist.isClient()) {
+            MinecraftForge.EVENT_BUS.register(new ClientEventHandlers());
+        }
     }
 
     public static <T extends Item> Supplier<T> tab(Supplier<T> supplier) {
