@@ -1,3 +1,6 @@
+1.0.6:
+- TqLxQuanZ added a new command on learning specific category for a player.
+
 1.0.5:
 - Fixed crash on dedicated server
 
