@@ -167,7 +167,6 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     if (!hasEnergy) {
                         color = 0x444444;
                     }
-                    int fullColor = 0xff000000 | (color & 0x00ffffff);
                     int borderColor = 0xff333333;
                     if (searchResults.contains(pos)) {
                         // This is a search result
@@ -175,33 +174,10 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         searchResults.remove(pos);
                     }
 
-                    if (entry == MapPalette.CITY) {
-                        RenderHelper.drawBeveledBox(batch, startX, startZ, startX + MAPCELL_SIZE, startZ + MAPCELL_SIZE, fullColor, fullColor, fullColor);
-
-                        // Determine pattern offset
-                        int patternOffsetX = x % 2;
-                        int patternOffsetZ = z % 2;
-
-                        // Draw 5×5 dithered black squares
-                        int step = MAPCELL_SIZE / 5;
-                        for (int i = 0; i < 5; i++) {
-                            for (int j = 0; j < 5; j++) {
-                                // Simple dither condition — you can tweak this for different patterns
-                                if ((i + j + patternOffsetX + patternOffsetZ) % 2 == 0) {
-                                    int x0 = startX + i * step;
-                                    int z0 = startZ + j * step;
-                                    int x1 = startX + (i + 1) * step;
-                                    int z1 = startZ + (j + 1) * step;
-                                    RenderHelper.drawBeveledBox(batch, x0, z0, x1, z1, 0xff000000, 0xff000000, 0xff000000);
-                                }
-                            }
-                        }
-                    } else {
-                        RenderHelper.drawBeveledBox(batch, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, borderColor, borderColor, 0xff000000 + color);
-                    }
+                    RenderHelper.drawBeveledBox(batch, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, borderColor, borderColor, 0xff000000 + color);
                     if (entry.iconU() >= 0) {
                         // We have an icon
-                        icons.add(new Icon(startX+2, startZ+2, MAPCELL_SIZE-4, MAPCELL_SIZE-4, entry.iconU(), entry.iconV(), 32, 32));
+                        icons.add(new Icon(startX, startZ, MAPCELL_SIZE, MAPCELL_SIZE, entry.iconU(), entry.iconV(), 32, 32));
                     }
                 }
 

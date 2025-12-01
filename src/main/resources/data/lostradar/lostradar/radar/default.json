@@ -65,6 +65,16 @@
       ]
     },
     {
+      "name": "city",
+      "color": 16711920,
+      "translatableKey": "lostradar.city",
+      "usage": 0,
+      "commands": [],
+      "u": 160,
+      "v": 0,
+      "buildings": []
+    },
+    {
       "name": "default",
       "color": 13421772,
       "usage": 1,
