@@ -41,6 +41,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
 
     private final Set<EntryPos> todo = Collections.synchronizedSet(new HashSet<>());
 
+    private static final int VERSION = 1;
 
     private static final Codec<Pair<EntryPos, MapChunk>> PAIR_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             EntryPos.CODEC.fieldOf("entryPos").forGetter(Pair::getLeft),
@@ -78,11 +79,15 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
     }
 
     private ServerMapData(CompoundTag tag) {
-        DataResult<Map<EntryPos, MapChunk>> result = MAP_CODEC.parse(NbtOps.INSTANCE, tag.get("chunks"));
-        if (result.result().isPresent()) {
-            mapChunks.putAll(result.result().get());
+        int version = tag.getInt("version");
+        // If version is 0 we have an old version and then we don't load the cache
+        if (version > 0) {
+            DataResult<Map<EntryPos, MapChunk>> result = MAP_CODEC.parse(NbtOps.INSTANCE, tag.get("chunks"));
+            if (result.result().isPresent()) {
+                mapChunks.putAll(result.result().get());
+            }
+            WorldWorkerManager.addWorker(this);
         }
-        WorldWorkerManager.addWorker(this);
     }
 
     @Override
@@ -107,6 +112,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
 
     @Override
     public CompoundTag save(CompoundTag tag) {
+        tag.putInt("version", VERSION);
         DataResult<Tag> result = MAP_CODEC.encodeStart(NbtOps.INSTANCE, mapChunks);
         if (result.result().isPresent()) {
             tag.put("chunks", result.result().get());
@@ -248,6 +254,14 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         ILostCityInformation info = LostCitiesCompat.lostCities.getLostInfo(level);
         if (info != null) {
             PaletteCache cache = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(level));
+            int cityIdx = cache.getEntryIdxByName("city");
+            if (cityIdx == -1) {
+                throw new RuntimeException("City palette entry not found in palette!");
+            }
+            int highwayIdx = cache.getEntryIdxByName("highway");
+            if (highwayIdx == -1) {
+                throw new RuntimeException("Highway palette entry not found in palette!");
+            }
             int defaultEntry = cache.getDefaultEntry();
             short[] data = new short[MapChunk.MAPCHUNK_SIZE * MapChunk.MAPCHUNK_SIZE];
             int[] biomeColors = new int[MapChunk.MAPCHUNK_SIZE * MapChunk.MAPCHUNK_SIZE];
@@ -265,9 +279,9 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
                                 dataAt = (short) defaultEntry;
                             }
                         } else if (chunk.getMaxHighwayLevel() != -1) {
-                            dataAt = MapChunk.HIGHWAY;
+                            dataAt = highwayIdx;
                         } else if (chunk.isCity()) {
-                            dataAt = MapChunk.CITY;
+                            dataAt = cityIdx;
                         }
                     }
                     data[x + z * MapChunk.MAPCHUNK_SIZE] = (short) dataAt;

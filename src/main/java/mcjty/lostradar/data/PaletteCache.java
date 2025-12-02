@@ -71,6 +71,15 @@ public class PaletteCache {
         return entryForBuilding.get(building);
     }
 
+    public int getEntryIdxByName(String name) {
+        for (int i = 0; i < palette.palette().size(); i++) {
+            if (name.equals(palette.palette().get(i).name())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     @Nullable
     public MapPalette.PaletteEntry getEntryByCategory(String category) {
         return entryByCategory.get(category);

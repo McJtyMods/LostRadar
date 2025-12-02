@@ -121,13 +121,13 @@ public class ClientMapData {
         if (dataAt < 0) {
             return null;
         }
-        if (dataAt == MapChunk.CITY) {
-            return MapPalette.CITY;
-        } else if (dataAt == MapChunk.HIGHWAY) {
-            return MapPalette.HIGHWAY;
-        } else {
+//        if (dataAt == MapChunk.CITY) {
+//            return MapPalette.CITY;
+//        if (dataAt == MapChunk.HIGHWAY) {
+//            return MapPalette.HIGHWAY;
+//        } else {
             PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(level));
-            return palette.getPalette().palette().get(dataAt);
-        }
+        return palette.getPalette().palette().get(dataAt);
+//        }
     }
 }

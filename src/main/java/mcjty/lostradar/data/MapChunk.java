@@ -21,9 +21,6 @@ public record MapChunk(int chunkX, int chunkZ, short[] data, int[] biomeColors) 
     public static final int MAPCHUNK_SIZE = 8;
     public static final int MAPCHUNK_MASK = 0x7;
 
-    public static final short CITY = Short.MAX_VALUE;
-    public static final short HIGHWAY = Short.MAX_VALUE - 1;
-
     public static final StreamCodec<FriendlyByteBuf, MapChunk> STREAM_CODEC = StreamCodec.composite(
             StandardCodecs.INT, MapChunk::chunkX,
             StandardCodecs.INT, MapChunk::chunkZ,

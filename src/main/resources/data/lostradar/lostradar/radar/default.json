@@ -66,12 +66,22 @@
     },
     {
       "name": "city",
-      "color": 16711920,
+      "color": 11184810,
       "translatableKey": "lostradar.city",
       "usage": 0,
       "commands": [],
       "u": 160,
       "v": 0,
+      "buildings": []
+    },
+    {
+      "name": "highway",
+      "color": 11184810,
+      "translatableKey": "lostradar.highway",
+      "usage": 0,
+      "commands": [],
+      "u": 160,
+      "v": 32,
       "buildings": []
     },
     {
@@ -82,8 +92,7 @@
       "u": -1,
       "v": -1,
       "translatableKey": "lostradar.default",
-      "buildings": [
-      ]
+      "buildings": []
     }
   ]
 }
