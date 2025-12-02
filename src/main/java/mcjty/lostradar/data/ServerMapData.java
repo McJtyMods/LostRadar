@@ -41,7 +41,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
 
     private final Set<EntryPos> todo = Collections.synchronizedSet(new HashSet<>());
 
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     private static final Codec<Pair<EntryPos, MapChunk>> PAIR_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             EntryPos.CODEC.fieldOf("entryPos").forGetter(Pair::getLeft),
@@ -80,8 +80,8 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
 
     private ServerMapData(CompoundTag tag) {
         int version = tag.getInt("version");
-        // If version is 0 we have an old version and then we don't load the cache
-        if (version > 0) {
+        // Only load the cache for version 2 or higher. Older caches are discarded.
+        if (version >= 2) {
             DataResult<Map<EntryPos, MapChunk>> result = MAP_CODEC.parse(NbtOps.INSTANCE, tag.get("chunks"));
             if (result.result().isPresent()) {
                 mapChunks.putAll(result.result().get());
@@ -264,7 +264,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
             }
             int defaultEntry = cache.getDefaultEntry();
             short[] data = new short[MapChunk.MAPCHUNK_SIZE * MapChunk.MAPCHUNK_SIZE];
-            int[] biomeColors = new int[MapChunk.MAPCHUNK_SIZE * MapChunk.MAPCHUNK_SIZE];
+            BiomeColorIndex[] biomeColors = new BiomeColorIndex[MapChunk.MAPCHUNK_SIZE * MapChunk.MAPCHUNK_SIZE];
             for (int x = 0; x < MapChunk.MAPCHUNK_SIZE; x++) {
                 for (int z = 0; z < MapChunk.MAPCHUNK_SIZE; z++) {
                     int dataAt = -1;
@@ -286,7 +286,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
                     }
                     data[x + z * MapChunk.MAPCHUNK_SIZE] = (short) dataAt;
                     // @todo use getAverageBiomeColor
-                    int biomeColor = getBiomeColor(level, pos, x, 8, z, 8);
+                    BiomeColorIndex biomeColor = getBiomeColor(level, pos, x, 8, z, 8);
                     biomeColors[x + z * MapChunk.MAPCHUNK_SIZE] = biomeColor;
                 }
             }
@@ -298,9 +298,9 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         return null;
     }
 
-    // For four points in a chunk we calculate the biome color and then return the color that occurs most
-    private static int getAverageBiomeColor(Level level, EntryPos pos, int x, int z) {
-        int []color = new int[4];
+    // For four points in a chunk we calculate the biome index and then return the index that occurs most
+    private static BiomeColorIndex getAverageBiomeColor(Level level, EntryPos pos, int x, int z) {
+        BiomeColorIndex[] color = new BiomeColorIndex[4];
         color[0] = getBiomeColor(level, pos, x, 4, z, 4);
         color[1] = getBiomeColor(level, pos, x, 4, z, 12);
         color[2] = getBiomeColor(level, pos, x, 12, z, 4);
@@ -324,21 +324,23 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
         return color[maxIndex];
     }
 
-    private static int getBiomeColor(Level level, EntryPos pos, int x, int offsetX, int z, int offsetZ) {
+    // Return biome color index
+    private static BiomeColorIndex getBiomeColor(Level level, EntryPos pos, int x, int offsetX, int z, int offsetZ) {
         Holder<Biome> biome = level.getBiome(new BlockPos(((pos.chunkX() + x) << 4) + offsetX, 65, ((pos.chunkZ() + z) << 4) + offsetZ));
-        // Biome colors: pastel blue for ocean, green for forests, brown for mountains, yellow for deserts
-        int biomeColor = 0x00ff00;
+        BiomeColorIndex idx; // default
         if (biome.containsTag(BiomeTags.IS_OCEAN) || biome.containsTag(BiomeTags.IS_RIVER) || biome.containsTag(BiomeTags.IS_BEACH)) {
-            biomeColor = 0x0000ff;
+            idx = BiomeColorIndex.OCEAN;
         } else if (biome.containsTag(BiomeTags.IS_MOUNTAIN)) {
-            biomeColor = 0x8b4513;
+            idx = BiomeColorIndex.MOUNTAIN;
         } else if (biome.containsTag(Tags.Biomes.IS_DESERT) || biome.containsTag(BiomeTags.IS_BADLANDS)) {
-            biomeColor = 0xffff00;
+            idx = BiomeColorIndex.DESERT;
         } else if (biome.containsTag(BiomeTags.IS_FOREST)) {
-            biomeColor = 0x006400;
+            idx = BiomeColorIndex.FOREST;
         } else if (biome.containsTag(Tags.Biomes.IS_PLAINS)) {
-            biomeColor = 0x00ff00;
+            idx = BiomeColorIndex.PLAINS;
+        } else {
+            idx = BiomeColorIndex.OTHER;
         }
-        return biomeColor;
+        return idx;
     }
 }

@@ -150,16 +150,18 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         for (int x = -MAP_DIM; x <= MAP_DIM; x++) {
             for (int z = -MAP_DIM; z <= MAP_DIM; z++) {
                 ChunkPos pos = new ChunkPos(p.x + x, p.z + z);
-                int biomeColor = data.getBiomeColor(Minecraft.getInstance().level, pos);
-                if (biomeColor != -1) {
-                    // Render the biome color
+                int biomeIdx = data.getBiomeColor(Minecraft.getInstance().level, pos);
+                if (biomeIdx != -1) {
+                    // Translate biome index to actual color (configurable)
+                    int biomeColor = Config.getBiomeColor(biomeIdx);
                     if (!hasEnergy) {
-                        biomeColor = 0xff777777;
+                        biomeColor = 0x777777; // gray when no energy
                     }
                     RenderHelper.drawBeveledBox(batch, borderLeft + (x+ MAP_DIM) * MAPCELL_SIZE, borderTop + (z+ MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
                 }
                 int startX = borderLeft + (x + MAP_DIM) * MAPCELL_SIZE;
                 int startZ = borderTop + (z + MAP_DIM) * MAPCELL_SIZE;
+
                 MapPalette.PaletteEntry entry = data.getPaletteEntry(Minecraft.getInstance().level, pos);
                 if (entry != null) {
                     // Render the color
@@ -178,6 +180,14 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     if (entry.iconU() >= 0) {
                         // We have an icon
                         icons.add(new Icon(startX, startZ, MAPCELL_SIZE, MAPCELL_SIZE, entry.iconU(), entry.iconV(), 32, 32));
+                    }
+                } else {
+                    // Optional biome icon overlay from config
+                    if (biomeIdx != -1) {
+                        Config.UV uv = Config.getBiomeIconUV(hasEnergy, biomeIdx);
+                        if (uv.u() >= 0 && uv.v() >= 0) {
+                            icons.add(new Icon(startX, startZ, MAPCELL_SIZE, MAPCELL_SIZE, uv.u(), uv.v(), 32, 32));
+                        }
                     }
                 }
 

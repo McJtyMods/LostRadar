@@ -14,9 +14,9 @@ import java.util.List;
  * This record represents a map chunk of NxN chunks. The chunkX and chunkZ represent the top-left chunk.
  * The data is a flattened array of NxN shorts where each short represents a building category ID which
  * is mapped from a palette (separate structure)
- * The biomecolors is a 16x16 flattened array of biome colors
+ * The biomecolors is a 16x16 flattened array of biome color indices (BiomeColorIndex)
  */
-public record MapChunk(int chunkX, int chunkZ, short[] data, int[] biomeColors) {
+public record MapChunk(int chunkX, int chunkZ, short[] data, BiomeColorIndex[] biomeColors) {
 
     public static final int MAPCHUNK_SIZE = 8;
     public static final int MAPCHUNK_MASK = 0x7;
@@ -25,7 +25,7 @@ public record MapChunk(int chunkX, int chunkZ, short[] data, int[] biomeColors) 
             StandardCodecs.INT, MapChunk::chunkX,
             StandardCodecs.INT, MapChunk::chunkZ,
             StandardCodecs.SHORT_ARRAY, MapChunk::data,
-            StandardCodecs.INT_ARRAY, MapChunk::biomeColors,
+            BiomeColorIndex.ARRAY_STREAM_CODEC, MapChunk::biomeColors,
             MapChunk::new
     );
 
@@ -33,16 +33,13 @@ public record MapChunk(int chunkX, int chunkZ, short[] data, int[] biomeColors) 
             Codec.INT.fieldOf("chunkX").forGetter(MapChunk::chunkX),
             Codec.INT.fieldOf("chunkZ").forGetter(MapChunk::chunkZ),
             Codec.list(Codec.SHORT).fieldOf("data").forGetter(d -> convertToList(d.data)),
-            Codec.list(Codec.INT).fieldOf("biomeColors").forGetter(d -> Arrays.stream(d.biomeColors).boxed().toList())
+            Codec.list(BiomeColorIndex.CODEC).fieldOf("biomeColors").forGetter(d -> Arrays.asList(d.biomeColors))
     ).apply(instance, (chunkX, chunkZ, shorts, biomeColors) -> {
         short[] data = new short[shorts.size()];
         for (int i = 0; i < shorts.size(); i++) {
             data[i] = shorts.get(i);
         }
-        int[] bc = new int[biomeColors.size()];
-        for (int i = 0; i < biomeColors.size(); i++) {
-            bc[i] = biomeColors.get(i);
-        }
+        BiomeColorIndex[] bc = biomeColors.toArray(new BiomeColorIndex[0]);
         return new MapChunk(chunkX, chunkZ, data, bc);
     }));
 
@@ -66,6 +63,6 @@ public record MapChunk(int chunkX, int chunkZ, short[] data, int[] biomeColors) 
         int x = pos.x & MAPCHUNK_MASK;
         int z = pos.z & MAPCHUNK_MASK;
         int index = x + z * MAPCHUNK_SIZE;
-        return biomeColors[index];
+        return biomeColors[index].ordinal();
     }
 }

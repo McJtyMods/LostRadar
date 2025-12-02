@@ -1,3 +1,9 @@
+Upcoming:
+- Icons are now scaled to the full available size in the map grid
+- Cities and highways now also use an icon which has to be defined in the default.json datapack (by name "city" and "highway")
+- It's now possible to configure textures for the biome colors in the client side config
+- It's now possible to configure the biome colors as well
+
 1.0.6:
 - TqLxQuanZ added a new command on learning specific category for a player.
 
