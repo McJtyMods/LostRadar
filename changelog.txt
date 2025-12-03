@@ -1,4 +1,4 @@
-Upcoming:
+1.20-1.1.0:
 - Icons are now scaled to the full available size in the map grid
 - Cities and highways now also use an icon which has to be defined in the default.json datapack (by name "city" and "highway")
 - It's now possible to configure textures for the biome colors in the client side config
