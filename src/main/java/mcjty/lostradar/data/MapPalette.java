@@ -42,6 +42,6 @@ public record MapPalette(List<PaletteEntry> palette) {
 
     public static MapPalette getDefaultPalette(Level level) {
         Registry<MapPalette> registry = level.registryAccess().registryOrThrow(CustomRegistries.PALETTE_REGISTRY_KEY);
-        return registry.get(new ResourceLocation(LostRadar.MODID, "default"));
+        return registry.get(ResourceLocation.fromNamespaceAndPath(LostRadar.MODID, "default"));
     }
 }

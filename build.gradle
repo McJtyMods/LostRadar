@@ -14,29 +14,17 @@ if (project.file('../gradletools.gradle').exists()) {
     apply from: 'https://raw.githubusercontent.com/McJtyMods/MultiWorkspace/1.21_neo/gradletools.gradle'
 }
 
-plugins { id "com.modrinth.minotaur" version "2.8.8" }
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'eclipse'
-apply plugin: 'com.matthewprenger.cursegradle'
-apply plugin: 'maven-publish'
-if (project.file('../gradletools.gradle').exists()) {
-    apply from: '../gradletools.gradle'
-} else {
-    apply from: 'https://raw.githubusercontent.com/McJtyMods/MultiWorkspace/1.20_tech/gradletools.gradle'
-}
-
 group = "com.github.mcjty"
 archivesBaseName = "lostradar"
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 if (System.getenv('BUILD_NUMBER') != null) {
     version += "-${System.getenv('BUILD_NUMBER')}"
 }
 
 repos()
-runs('lostradar')
-jars('lostradar')
+runs()
+jars()
 
 sourceSets.main.resources {
     srcDir 'src/generated/resources'

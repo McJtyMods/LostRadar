@@ -4,8 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import mcjty.lostradar.data.PlayerMapKnowledge;
-import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
+import mcjty.lostradar.setup.Registration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,7 +20,7 @@ public class CommandClear {
 
     private static int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(player).ifPresent(PlayerMapKnowledge::clearKnowledge);
+        player.getData(Registration.PLAYER_KNOWLEDGE).clearKnowledge();
         return 0;
     }
 }

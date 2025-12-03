@@ -1,43 +1,42 @@
 package mcjty.lostradar.network;
 
-import mcjty.lib.network.CustomPacketPayload;
-import mcjty.lib.network.PlayPayloadContext;
 import mcjty.lostradar.LostRadar;
 import mcjty.lostradar.data.ClientMapData;
 import mcjty.lostradar.data.MapChunk;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record PacketReturnMapChunkToClient(ResourceKey<Level> level, MapChunk chunk) implements CustomPacketPayload {
 
-    public static ResourceLocation ID = new ResourceLocation(LostRadar.MODID, "returnmapchunk");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(LostRadar.MODID, "returnmapchunk");
+    public static final Type<PacketReturnMapChunkToClient> TYPE = new Type<>(ID);
 
-    public static PacketReturnMapChunkToClient create(FriendlyByteBuf buf) {
-        ResourceKey<Level> level = ResourceKey.create(Registries.DIMENSION, buf.readResourceLocation());
-        MapChunk chunk = MapChunk.STREAM_CODEC.decode(buf);
-        return new PacketReturnMapChunkToClient(level, chunk);
-    }
+    private static final StreamCodec<RegistryFriendlyByteBuf, ResourceKey<Level>> LEVEL_KEY_CODEC = StreamCodec.of(
+            (buf, key) -> buf.writeResourceLocation(key.location()),
+            buf -> ResourceKey.create(Registries.DIMENSION, buf.readResourceLocation())
+    );
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, PacketReturnMapChunkToClient> CODEC = StreamCodec.composite(
+            LEVEL_KEY_CODEC, PacketReturnMapChunkToClient::level,
+            MapChunk.STREAM_CODEC, PacketReturnMapChunkToClient::chunk,
+            PacketReturnMapChunkToClient::new
+    );
 
     @Override
-    public void write(FriendlyByteBuf buf) {
-        buf.writeResourceLocation(level.location());
-        MapChunk.STREAM_CODEC.encode(buf, chunk);
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    @Override
-    public ResourceLocation id() {
-        return ID;
-    }
-
-    public void handle(PlayPayloadContext ctx) {
-        ctx.workHandler().submitAsync(() -> {
-            ctx.player().ifPresent(player -> {
-                ClientMapData clientMapData = ClientMapData.getData();
-                clientMapData.addChunk(level, chunk);
-            });
+    public void handle(IPayloadContext ctx) {
+        ctx.enqueueWork(() -> {
+            ClientMapData clientMapData = ClientMapData.getData();
+            clientMapData.addChunk(level, chunk);
         });
     }
 }

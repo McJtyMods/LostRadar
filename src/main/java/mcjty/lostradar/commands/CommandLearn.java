@@ -8,7 +8,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import mcjty.lostradar.data.MapPalette;
 import mcjty.lostradar.data.PaletteCache;
-import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
+import mcjty.lostradar.data.PlayerMapKnowledge;
+import mcjty.lostradar.setup.Registration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -30,9 +31,9 @@ public class CommandLearn {
     private static int learnCategory(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         String category = context.getArgument("category", String.class);
         ServerPlayer player = context.getSource().getPlayerOrException();
-        PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(player).ifPresent(handler -> {
-            handler.getKnownCategories().add(category);
-        });
+        PlayerMapKnowledge data = player.getData(Registration.PLAYER_KNOWLEDGE);
+        data = data.addCategory(category);
+        player.setData(Registration.PLAYER_KNOWLEDGE, data);
         return 0;
     }
 

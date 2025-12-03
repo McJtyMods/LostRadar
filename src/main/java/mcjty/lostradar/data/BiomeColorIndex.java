@@ -1,14 +1,15 @@
 package mcjty.lostradar.data;
 
 import com.mojang.serialization.Codec;
-import mcjty.lib.varia.codec.StreamCodec;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.StringRepresentable;
 
 /**
  * Enum representing the six biome color categories used on the radar map.
  * The values are indices sent over the network and stored in MapChunk.biomeColors.
  */
-public enum BiomeColorIndex {
+public enum BiomeColorIndex implements StringRepresentable {
     OCEAN(0x0000ff),
     MOUNTAIN(0x8b4513),
     DESERT(0xffff00),
@@ -16,10 +17,11 @@ public enum BiomeColorIndex {
     PLAINS(0x00ff00),
     OTHER(0x22ee22); // Default to green if unknown
 
-    public static final Codec<BiomeColorIndex> CODEC = Codec.INT.xmap(BiomeColorIndex::fromOrdinal, BiomeColorIndex::ordinal);
-    public static final StreamCodec<FriendlyByteBuf, BiomeColorIndex[]> ARRAY_STREAM_CODEC = new StreamCodec<>() {
+    public static final Codec<BiomeColorIndex> CODEC = StringRepresentable.fromEnum(BiomeColorIndex::values);
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, BiomeColorIndex[]> ARRAY_STREAM_CODEC = new StreamCodec<>() {
         @Override
-        public BiomeColorIndex[] decode(FriendlyByteBuf buffer) {
+        public BiomeColorIndex[] decode(RegistryFriendlyByteBuf buffer) {
             int cnt = buffer.readVarInt();
             if (cnt <= 0) {
                 return new BiomeColorIndex[0];
@@ -33,7 +35,7 @@ public enum BiomeColorIndex {
         }
 
         @Override
-        public void encode(FriendlyByteBuf buffer, BiomeColorIndex[] value) {
+        public void encode(RegistryFriendlyByteBuf buffer, BiomeColorIndex[] value) {
             buffer.writeVarInt(value.length);
             for (BiomeColorIndex v : value) {
                 buffer.writeVarInt(v.ordinal());
@@ -51,10 +53,16 @@ public enum BiomeColorIndex {
         return color;
     }
 
+
     public static BiomeColorIndex fromOrdinal(int idx) {
         if (idx < 0 || idx >= values().length) {
             return OTHER;
         }
         return values()[idx];
+    }
+
+    @Override
+    public String getSerializedName() {
+        return name();
     }
 }

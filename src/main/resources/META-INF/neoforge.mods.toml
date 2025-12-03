@@ -1,10 +1,8 @@
 modLoader="javafml"
-license="MIT License https://github.com/McJtyMods/LostSouls/blob/1.18/LICENCE"
-loaderVersion="[47,)"
-issueTrackerURL="http://github.com/McJtyMods/LostSouls/issues"
-displayURL="http://github.com/McJtyMods/LostSouls/"
-#logoFile="examplemod.png" #optional
-#credits="Thanks for this example mod goes to Java" #optional
+loaderVersion="[2,)"
+license="MIT License https://github.com/McJtyMods/LostRadar/blob/1.18/LICENCE"
+issueTrackerURL="http://github.com/McJtyMods/LostRadar/issues"
+displayURL="http://github.com/McJtyMods/LostRadar/"
 authors="McJty"
 
 [[mods]]
@@ -16,20 +14,20 @@ description='''
 Find the cities
 '''
 [[dependencies.lostradar]]
-    modId="forge"
-    mandatory=true
-    versionRange="[31,)"
+    modId="neoforge"
+    type="required"
+    versionRange="[21.0,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.lostradar]]
     modId="mcjtylib"
     mandatory=true
-    versionRange="[1.20-8.0.4,)"
+    versionRange="[1.21-9.0.18,)"
     ordering="AFTER"
     side="BOTH"
 [[dependencies.lostradar]]
     modId="lostcities"
     mandatory=true
-    versionRange="[1.20-7.3.1,)"
+    versionRange="[1.21-8.2.1,)"
     ordering="AFTER"
     side="BOTH"

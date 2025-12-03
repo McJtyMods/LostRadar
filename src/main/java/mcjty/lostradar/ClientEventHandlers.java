@@ -1,8 +1,8 @@
 package mcjty.lostradar;
 
 import mcjty.lostradar.data.ClientMapData;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 
 public class ClientEventHandlers {
 

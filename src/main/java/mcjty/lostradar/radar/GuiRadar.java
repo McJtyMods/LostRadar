@@ -1,7 +1,8 @@
 package mcjty.lostradar.radar;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import mcjty.lib.client.BatchQuadGuiRenderer;
+import com.mojang.blaze3d.vertex.*;
+import com.mojang.math.Axis;
 import mcjty.lib.client.GuiTools;
 import mcjty.lib.client.RenderHelper;
 import mcjty.lib.gui.*;
@@ -17,10 +18,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.saveddata.maps.MapDecoration;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -36,8 +41,8 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     private static final int MAPCELL_SIZE = 10;
     private static final int MAP_DIM = 10;
 
-    private static final ResourceLocation ICONS = new ResourceLocation(LostRadar.MODID, "textures/gui/icons.png");
-    private static final ResourceLocation MAP_ICONS_LOCATION = new ResourceLocation("textures/map/map_icons.png");
+    private static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(LostRadar.MODID, "textures/gui/icons.png");
+    private static final ResourceLocation MAP_ICONS_LOCATION = ResourceLocation.withDefaultNamespace("textures/atlas/map_decorations.png");
 
     private WidgetList categoryList;
     private Button scanButton;
@@ -119,12 +124,39 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         int startX = borderLeft + (MAP_DIM) * MAPCELL_SIZE;
         int startZ = borderTop + (MAP_DIM) * MAPCELL_SIZE;
-        RenderHelper.drawRotatedIcon(graphics, startX + 2, startZ + 2, 16, angle, MAP_ICONS_LOCATION, 0, 0, 16, 16);
+        MapDecoration playerDecoration = new MapDecoration(MapDecorationTypes.PLAYER, (byte)0, (byte)0, (byte)0, Optional.empty());
+        TextureAtlasSprite playerSprite = Minecraft.getInstance().getMapDecorationTextures().get(playerDecoration);
+        drawRotatedIcon(graphics, startX + 2, startZ + 2, 16, angle, playerSprite, 0, 0, 16, 16);
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         for (Icon icon : icons) {
             graphics.blit(ICONS, icon.x(), icon.y(), icon.w(), icon.h(), icon.u(), icon.v(), icon.pw(), icon.ph(), 256, 256);
         }
+    }
+
+    private static void drawRotatedIcon(GuiGraphics graphics, int centerX, int centerY, int size, double angle, TextureAtlasSprite texture, int u, int v, int w, int h) {
+        PoseStack poseStack = graphics.pose();
+        poseStack.pushPose();
+        poseStack.translate(centerX, centerY, 0);
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) angle));
+        poseStack.translate(-centerX, -centerY, 0);
+        RenderSystem.setShaderTexture(0, MAP_ICONS_LOCATION);
+        drawTexturedModalRect(poseStack, texture, centerX - size / 2, centerY - size / 2, u, v, w, h);
+        poseStack.popPose();
+    }
+
+    private static void drawTexturedModalRect(PoseStack poseStack, TextureAtlasSprite texture, int x, int y, int u, int v, int width, int height) {
+        Matrix4f matrix = poseStack.last().pose();
+        float zLevel = 0.01f;
+        float f = (1 / 256.0f);
+        float f1 = (1 / 256.0f);
+        Tesselator tessellator = Tesselator.getInstance();
+        BufferBuilder buffer = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        buffer.addVertex(matrix, (x + 0), (y + height), zLevel).setUv(((u + 0) * f), ((v + height) * f1));
+        buffer.addVertex(matrix, (x + width), (y + height), zLevel).setUv(((u + width) * f), ((v + height) * f1));
+        buffer.addVertex(matrix, (x + width), (y + 0), zLevel).setUv(((u + width) * f), ((v + 0) * f1));
+        buffer.addVertex(matrix, (x + 0), (y + 0), zLevel).setUv(((u + 0) * f), ((v + 0) * f1));
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
     private record Icon(int x, int y, int w, int h, int u, int v, int pw, int ph) {
@@ -157,7 +189,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                     if (!hasEnergy) {
                         biomeColor = 0x777777; // gray when no energy
                     }
-                    RenderHelper.drawBeveledBox(batch, borderLeft + (x+ MAP_DIM) * MAPCELL_SIZE, borderTop + (z+ MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
+                    batch.drawBeveledBox(borderLeft + (x+ MAP_DIM) * MAPCELL_SIZE, borderTop + (z+ MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0xff000000 + biomeColor, 0xff000000 + biomeColor, 0xff000000 + biomeColor);
                 }
                 int startX = borderLeft + (x + MAP_DIM) * MAPCELL_SIZE;
                 int startZ = borderTop + (z + MAP_DIM) * MAPCELL_SIZE;
@@ -176,7 +208,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                         searchResults.remove(pos);
                     }
 
-                    RenderHelper.drawBeveledBox(batch, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, borderColor, borderColor, 0xff000000 + color);
+                    batch.drawBeveledBox(borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, borderColor, borderColor, 0xff000000 + color);
                     if (entry.iconU() >= 0) {
                         // We have an icon
                         icons.add(new Icon(startX, startZ, MAPCELL_SIZE, MAPCELL_SIZE, entry.iconU(), entry.iconV(), 32, 32));
@@ -194,7 +226,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
                 // If we want to show searched areas we render a darker overlay on top of the map parts that we didn't search
                 if (!searchedChunks.isEmpty() && !searchedChunks.contains(EntryPos.fromChunkPos(Minecraft.getInstance().level.dimension(), pos))) {
                     // Render a darker overlay
-                    RenderHelper.drawBeveledBox(batch, borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0x80000000, 0x80000000, 0x80000000);
+                    batch.drawBeveledBox(borderLeft + (x + MAP_DIM) * MAPCELL_SIZE, borderTop + (z + MAP_DIM) * MAPCELL_SIZE, borderLeft + (x + MAP_DIM + 1) * MAPCELL_SIZE, borderTop + (z + MAP_DIM + 1) * MAPCELL_SIZE, 0x80000000, 0x80000000, 0x80000000);
                 }
             }
         }
@@ -232,7 +264,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
             int color = 0xff000000 | (clamped << 16) | (clamped << 8) | clamped;
             int x1 = borderLeft + (bx + MAP_DIM) * MAPCELL_SIZE + 3;
             int y1 = borderTop + (bz + MAP_DIM) * MAPCELL_SIZE + 3;
-            RenderHelper.drawBeveledBox(batch, x1, y1, borderLeft + (bx + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (bz + MAP_DIM + 1) * MAPCELL_SIZE - 3, color, color, color);
+            batch.drawBeveledBox(x1, y1, borderLeft + (bx + MAP_DIM + 1) * MAPCELL_SIZE - 3, borderTop + (bz + MAP_DIM + 1) * MAPCELL_SIZE - 3, color, color, color);
             // Store the coordinates for later use
             borderCoordinates.add(Pair.of(new Rect2i(x1, y1, MAPCELL_SIZE - 6, MAPCELL_SIZE - 6), pos));
         }
@@ -251,18 +283,16 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         categoryList.removeChildren();
         categories.clear();
         PaletteCache palette = PaletteCache.getOrCreatePaletteCache(MapPalette.getDefaultPalette(Minecraft.getInstance().level));
-        PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(Minecraft.getInstance().player).ifPresent(handler -> {
-            for (MapPalette.PaletteEntry category : palette.getPalette().palette()) {
-                if (handler.getKnownCategories().contains(category.name())) {
-                    categoryList.children(makeLine(category));
-                    categories.add(category.name());
-                    if (!searchString.isEmpty() && category.name().equals(searchString)) {
-                        selected.set(categoryList.getChildren().size() - 1);
-                    }
+        PlayerMapKnowledge knowledge = Minecraft.getInstance().player.getData(Registration.PLAYER_KNOWLEDGE);
+        for (MapPalette.PaletteEntry category : palette.getPalette().palette()) {
+            if (knowledge.knownCategories().contains(category.name())) {
+                categoryList.children(makeLine(category));
+                categories.add(category.name());
+                if (!searchString.isEmpty() && category.name().equals(searchString)) {
+                    selected.set(categoryList.getChildren().size() - 1);
                 }
             }
-
-        });
+        }
         categoryList.selected(selected.get());
     }
 
@@ -283,7 +313,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         } else {
             scanButton.text(progress + "%");
         }
-        drawWindow(graphics);
+        drawWindow(graphics, mouseX, mouseY, partialTicks);
         renderMap(graphics);
         renderTooltip(graphics, mouseX, mouseY);
 
@@ -372,9 +402,9 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
     }
 
     @Override
-    public boolean mouseScrolledFromEvent(double x, double y, double amount) {
+    public boolean mouseScrolledFromEvent(double x, double y, double dx, double dy) {
         WindowManager manager = getWindow().getWindowManager();
-        manager.mouseScrolled(x, y, amount);
+        manager.mouseScrolled(x, y, dx, dy);
         return true;
     }
 

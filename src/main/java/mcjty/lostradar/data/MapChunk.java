@@ -2,9 +2,9 @@ package mcjty.lostradar.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import mcjty.lib.varia.codec.StandardCodecs;
-import mcjty.lib.varia.codec.StreamCodec;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.ChunkPos;
 
 import java.util.Arrays;
@@ -21,14 +21,34 @@ public record MapChunk(int chunkX, int chunkZ, short[] data, BiomeColorIndex[] b
     public static final int MAPCHUNK_SIZE = 8;
     public static final int MAPCHUNK_MASK = 0x7;
 
-    public static final StreamCodec<FriendlyByteBuf, MapChunk> STREAM_CODEC = StreamCodec.composite(
-            StandardCodecs.INT, MapChunk::chunkX,
-            StandardCodecs.INT, MapChunk::chunkZ,
-            StandardCodecs.SHORT_ARRAY, MapChunk::data,
+    private static final StreamCodec<RegistryFriendlyByteBuf, short[]> SHORT_ARRAY = new StreamCodec<>() {
+        public short[] decode(RegistryFriendlyByteBuf buffer) {
+            int cnt = buffer.readVarInt();
+            if (cnt <= 0) {
+                return new short[0];
+            } else {
+                short[] value = new short[cnt];
+                for (int i = 0; i < cnt; i++) {
+                    value[i] = buffer.readShort();
+                }
+                return value;
+            }
+        }
+        public void encode(RegistryFriendlyByteBuf buffer, short[] value) {
+            buffer.writeVarInt(value.length);
+            for (short v : value) {
+                buffer.writeShort(v);
+            }
+        }
+    };
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, MapChunk> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.INT, MapChunk::chunkX,
+            ByteBufCodecs.INT, MapChunk::chunkZ,
+            SHORT_ARRAY, MapChunk::data,
             BiomeColorIndex.ARRAY_STREAM_CODEC, MapChunk::biomeColors,
             MapChunk::new
     );
-
     public static final Codec<MapChunk> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.fieldOf("chunkX").forGetter(MapChunk::chunkX),
             Codec.INT.fieldOf("chunkZ").forGetter(MapChunk::chunkZ),

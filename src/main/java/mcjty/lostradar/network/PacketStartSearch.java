@@ -1,58 +1,54 @@
 package mcjty.lostradar.network;
 
-import mcjty.lib.network.CustomPacketPayload;
-import mcjty.lib.network.PlayPayloadContext;
 import mcjty.lib.varia.ComponentFactory;
 import mcjty.lostradar.LostRadar;
 import mcjty.lostradar.data.ServerMapData;
 import mcjty.lostradar.setup.Registration;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record PacketStartSearch(String category, int usage) implements CustomPacketPayload {
 
-    public static ResourceLocation ID = new ResourceLocation(LostRadar.MODID, "startsearch");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(LostRadar.MODID, "startsearch");
+    public static final Type<PacketStartSearch> TYPE = new Type<>(ID);
 
-    public static PacketStartSearch create(FriendlyByteBuf buf) {
-        String category = buf.readUtf(32767);
-        int usage = buf.readInt();
-        return new PacketStartSearch(category, usage);
-    }
-
-    @Override
-    public void write(FriendlyByteBuf buf) {
-        buf.writeUtf(category);
-        buf.writeInt(usage);
-    }
+    public static final StreamCodec<RegistryFriendlyByteBuf, PacketStartSearch> CODEC = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8, PacketStartSearch::category,
+            ByteBufCodecs.INT, PacketStartSearch::usage,
+            PacketStartSearch::new
+    );
 
     @Override
-    public ResourceLocation id() {
-        return ID;
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public void handle(PlayPayloadContext ctx) {
-        ctx.workHandler().submitAsync(() -> {
-            ctx.player().ifPresent(player -> {
-                ServerMapData mapData = ServerMapData.getData(player.level());
-                if (category.isEmpty()) {
-                    mapData.stopSearch(player);
-                } else if (mapData.isSearching(player)) {
-                    if (mapData.isPaused(player)) {
-                        mapData.unpauseSearch(player);
-                    } else {
-                        mapData.pauseSearch(player);
-                    }
+    public void handle(IPayloadContext ctx) {
+        ctx.enqueueWork(() -> {
+            var player = ctx.player();
+            ServerMapData mapData = ServerMapData.getData(player.level());
+            if (category.isEmpty()) {
+                mapData.stopSearch(player);
+            } else if (mapData.isSearching(player)) {
+                if (mapData.isPaused(player)) {
+                    mapData.unpauseSearch(player);
                 } else {
-                    if (usage > 0) {
-                        int extracted = Registration.RADAR.get().extractEnergyNoMax(player.getMainHandItem(), usage, false);
-                        if (extracted < usage) {
-                            player.sendSystemMessage(ComponentFactory.translatable("lostradar.notenoughenergy", usage));
-                            return;
-                        }
-                    }
-                    mapData.startSearch(player, category);
+                    mapData.pauseSearch(player);
                 }
-            });
+            } else {
+                if (usage > 0) {
+                    int extracted = Registration.RADAR.get().extractEnergyNoMax(player.getMainHandItem(), usage, false);
+                    if (extracted < usage) {
+                        player.sendSystemMessage(ComponentFactory.translatable("lostradar.notenoughenergy", usage));
+                        return;
+                    }
+                }
+                mapData.startSearch(player, category);
+            }
         });
     }
 }

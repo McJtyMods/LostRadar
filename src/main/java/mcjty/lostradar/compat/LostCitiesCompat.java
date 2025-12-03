@@ -1,7 +1,7 @@
 package mcjty.lostradar.compat;
 
 import mcjty.lostcities.api.ILostCities;
-import net.minecraftforge.fml.InterModComms;
+import net.neoforged.fml.InterModComms;
 
 import javax.annotation.Nullable;
 import java.util.function.Function;

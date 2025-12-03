@@ -14,6 +14,7 @@ import mcjty.lostradar.network.PacketReturnSearchResultsToClient;
 import mcjty.lostradar.setup.Config;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
@@ -27,9 +28,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.common.WorldWorkerManager;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.neoforge.common.Tags;
+import net.neoforged.neoforge.common.WorldWorkerManager;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -111,7 +112,7 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
         tag.putInt("version", VERSION);
         DataResult<Tag> result = MAP_CODEC.encodeStart(NbtOps.INSTANCE, mapChunks);
         if (result.result().isPresent()) {
@@ -328,15 +329,15 @@ public class ServerMapData extends AbstractWorldData<ServerMapData> implements W
     private static BiomeColorIndex getBiomeColor(Level level, EntryPos pos, int x, int offsetX, int z, int offsetZ) {
         Holder<Biome> biome = level.getBiome(new BlockPos(((pos.chunkX() + x) << 4) + offsetX, 65, ((pos.chunkZ() + z) << 4) + offsetZ));
         BiomeColorIndex idx; // default
-        if (biome.containsTag(BiomeTags.IS_OCEAN) || biome.containsTag(BiomeTags.IS_RIVER) || biome.containsTag(BiomeTags.IS_BEACH)) {
+        if (biome.is(BiomeTags.IS_OCEAN) || biome.is(BiomeTags.IS_RIVER) || biome.is(BiomeTags.IS_BEACH)) {
             idx = BiomeColorIndex.OCEAN;
-        } else if (biome.containsTag(BiomeTags.IS_MOUNTAIN)) {
+        } else if (biome.is(BiomeTags.IS_MOUNTAIN)) {
             idx = BiomeColorIndex.MOUNTAIN;
-        } else if (biome.containsTag(Tags.Biomes.IS_DESERT) || biome.containsTag(BiomeTags.IS_BADLANDS)) {
+        } else if (biome.is(Tags.Biomes.IS_DESERT) || biome.is(BiomeTags.IS_BADLANDS)) {
             idx = BiomeColorIndex.DESERT;
-        } else if (biome.containsTag(BiomeTags.IS_FOREST)) {
+        } else if (biome.is(BiomeTags.IS_FOREST)) {
             idx = BiomeColorIndex.FOREST;
-        } else if (biome.containsTag(Tags.Biomes.IS_PLAINS)) {
+        } else if (biome.is(Tags.Biomes.IS_PLAINS)) {
             idx = BiomeColorIndex.PLAINS;
         } else {
             idx = BiomeColorIndex.OTHER;

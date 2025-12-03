@@ -4,18 +4,16 @@ import mcjty.lostradar.LostRadar;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DataPackRegistryEvent;
-import net.minecraftforge.registries.DeferredRegister;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DataPackRegistryEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class CustomRegistries {
 
-    public static final ResourceKey<Registry<MapPalette>> PALETTE_REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(LostRadar.MODID, "radar"));
+    public static final ResourceKey<Registry<MapPalette>> PALETTE_REGISTRY_KEY = ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(LostRadar.MODID, "radar"));
     public static final DeferredRegister<MapPalette> PALETTE_DEFERRED_REGISTER = DeferredRegister.create(PALETTE_REGISTRY_KEY, LostRadar.MODID);
 
-    public static void init() {
-        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+    public static void init(IEventBus bus) {
         PALETTE_DEFERRED_REGISTER.register(bus);
     }
 

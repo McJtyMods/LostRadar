@@ -1,9 +1,9 @@
 package mcjty.lostradar.setup;
 
 import mcjty.lostradar.data.BiomeColorIndex;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.Arrays;
 import java.util.List;
@@ -11,26 +11,26 @@ import java.util.List;
 public class Config {
 
     // Server side
-    public static ForgeConfigSpec.IntValue SEARCH_RADIUS;
-    public static ForgeConfigSpec.IntValue RADAR_MAXENERGY;
-    public static ForgeConfigSpec.IntValue RADAR_RECEIVEPERTICK;
-    public static ForgeConfigSpec.IntValue RADAR_MINENERGY_FOR_MAP;
+    public static ModConfigSpec.IntValue SEARCH_RADIUS;
+    public static ModConfigSpec.IntValue RADAR_MAXENERGY;
+    public static ModConfigSpec.IntValue RADAR_RECEIVEPERTICK;
+    public static ModConfigSpec.IntValue RADAR_MINENERGY_FOR_MAP;
 
     // Client side
-    public static ForgeConfigSpec.IntValue HILIGHT_R1;
-    public static ForgeConfigSpec.IntValue HILIGHT_G1;
-    public static ForgeConfigSpec.IntValue HILIGHT_B1;
-    public static ForgeConfigSpec.IntValue HILIGHT_R2;
-    public static ForgeConfigSpec.IntValue HILIGHT_G2;
-    public static ForgeConfigSpec.IntValue HILIGHT_B2;
+    public static ModConfigSpec.IntValue HILIGHT_R1;
+    public static ModConfigSpec.IntValue HILIGHT_G1;
+    public static ModConfigSpec.IntValue HILIGHT_B1;
+    public static ModConfigSpec.IntValue HILIGHT_R2;
+    public static ModConfigSpec.IntValue HILIGHT_G2;
+    public static ModConfigSpec.IntValue HILIGHT_B2;
 
     // Two arrays (lists) with optional "u,v" coordinates in icons.png for the six biome types
     // Indexing is by BiomeColorIndex.ordinal()
-    public static ForgeConfigSpec.ConfigValue<List<? extends String>> BIOME_ICONS_ON;
-    public static ForgeConfigSpec.ConfigValue<List<? extends String>> BIOME_ICONS_OFF;
+    public static ModConfigSpec.ConfigValue<List<? extends String>> BIOME_ICONS_ON;
+    public static ModConfigSpec.ConfigValue<List<? extends String>> BIOME_ICONS_OFF;
 
     // Array (list) with RGB hex colors per biome type (order: OCEAN,MOUNTAIN,DESERT,FOREST,PLAINS,OTHER)
-    public static ForgeConfigSpec.ConfigValue<List<? extends String>> BIOME_COLORS;
+    public static ModConfigSpec.ConfigValue<List<? extends String>> BIOME_COLORS;
 
     // Cached parsed UV arrays
     private static UV[] CACHED_ON;
@@ -42,13 +42,13 @@ public class Config {
     private static int[] CACHED_COLORS;
     private static String CACHE_KEY_COLORS = null;
 
-    public static void register() {
-        registerServerConfigs();
-        registerClientConfigs();
+    public static void register(ModContainer container) {
+        registerServerConfigs(container);
+        registerClientConfigs(container);
     }
 
-    private static void registerServerConfigs() {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+    private static void registerServerConfigs(ModContainer container) {
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 
         builder.comment("General settings").push("general");
 
@@ -67,11 +67,11 @@ public class Config {
 
         builder.pop();
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, builder.build());
+        container.registerConfig(ModConfig.Type.SERVER, builder.build());
     }
 
-    private static void registerClientConfigs() {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+    private static void registerClientConfigs(ModContainer container) {
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 
         builder.comment("General settings").push("general");
 
@@ -112,7 +112,7 @@ public class Config {
 
         builder.pop();
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, builder.build());
+        container.registerConfig(ModConfig.Type.CLIENT, builder.build());
     }
 
     public record UV (int u, int v) {}

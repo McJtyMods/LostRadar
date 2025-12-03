@@ -1,28 +1,27 @@
 package mcjty.lostradar.radar;
 
+import mcjty.lib.api.power.ItemEnergy;
 import mcjty.lib.varia.EnergyTools;
 import mcjty.lib.varia.IEnergyItem;
-import mcjty.lib.varia.ItemCapabilityProvider;
 import mcjty.lostradar.LostRadar;
-import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
+import mcjty.lostradar.data.PlayerMapKnowledge;
 import mcjty.lostradar.network.Messages;
 import mcjty.lostradar.network.PacketKnowledgeToPlayer;
 import mcjty.lostradar.setup.Config;
-import net.minecraft.nbt.CompoundTag;
+import mcjty.lostradar.setup.Registration;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
 import javax.annotation.Nonnull;
 
 public class RadarItem extends Item implements IEnergyItem {
 
     public RadarItem() {
-        super(LostRadar.setup.defaultProperties().stacksTo(1).defaultDurability(1));
+        super(LostRadar.setup.defaultProperties().stacksTo(1).durability(1));
     }
 
     @Override
@@ -32,9 +31,8 @@ public class RadarItem extends Item implements IEnergyItem {
             GuiRadar.open();
         } else {
             // Send knowledge data to the client
-            PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(player).ifPresent(handler -> {
-                Messages.sendToPlayer(new PacketKnowledgeToPlayer(handler.getKnownCategories()), player);
-            });
+            PlayerMapKnowledge data = player.getData(Registration.PLAYER_KNOWLEDGE);
+            Messages.sendToPlayer(new PacketKnowledgeToPlayer(data.knownCategories()), player);
         }
         return super.use(world, player, hand);
     }
@@ -49,69 +47,60 @@ public class RadarItem extends Item implements IEnergyItem {
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
-        return stack.getTag() != null && stack.getTag().contains("Energy");
-    }
-
-    @Override
-    public boolean canBeDepleted() {
         return true;
     }
 
     @Override
-    public int getMaxDamage(ItemStack stack) {
-        return Config.RADAR_MAXENERGY.get();
+    public int getBarWidth(ItemStack stack) {
+        int max = getMaxEnergyStored(stack);
+        return Math.round((float)getEnergyStored(stack) * 13.0F / (float)max);
     }
 
-    @Override
-    public int getDamage(ItemStack stack) {
-        if (stack.getTag() == null || !stack.getTag().contains("Energy")) {
-            return 0;
-        }
-        return Config.RADAR_MAXENERGY.get() - stack.getTag().getInt("Energy");
-    }
-
-    @Override
-    public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
-        return new ItemCapabilityProvider(stack, this);
-    }
-
+    // @todo 1.21
+//    @Override
+//    public boolean canBeDepleted() {
+//        return true;
+//    }
 
     @Override
     public long receiveEnergyL(ItemStack container, long maxReceive, boolean simulate) {
-        if (container.getTag() == null) {
-            container.setTag(new CompoundTag());
+        ItemEnergy data = container.get(mcjty.lib.setup.Registration.ITEM_ENERGY);
+        if (data == null) {
+            data = new ItemEnergy(0);
         }
-        int energy = container.getTag().getInt("Energy");
-        int energyReceived = Math.min(Config.RADAR_MAXENERGY.get() - energy, Math.min(Config.RADAR_RECEIVEPERTICK.get(), EnergyTools.unsignedClampToInt(maxReceive)));
+        long energy = data.energy();
+        long energyReceived = Math.min(Config.RADAR_MAXENERGY.get() - energy, Math.min(Config.RADAR_RECEIVEPERTICK.get(), EnergyTools.unsignedClampToInt(maxReceive)));
 
         if (!simulate) {
             energy += energyReceived;
-            container.getTag().putInt("Energy", energy);
+            container.set(mcjty.lib.setup.Registration.ITEM_ENERGY, new ItemEnergy(energy));
         }
         return energyReceived;
     }
 
     @Override
     public long extractEnergyL(ItemStack container, long maxExtract, boolean simulate) {
-        if (container.getTag() == null || !container.getTag().contains("Energy")) {
-            return 0;
+        ItemEnergy data = container.get(mcjty.lib.setup.Registration.ITEM_ENERGY);
+        if (data == null) {
+            data = new ItemEnergy(0);
         }
-        int energy = container.getTag().getInt("Energy");
+        long energy = data.energy();
         int energyExtracted = 0;
 
         if (!simulate) {
             energy -= energyExtracted;
-            container.getTag().putInt("Energy", energy);
+            container.set(mcjty.lib.setup.Registration.ITEM_ENERGY, new ItemEnergy(energy));
         }
         return energyExtracted;
     }
 
     @Override
     public long getEnergyStoredL(ItemStack container) {
-        if (container.getTag() == null || !container.getTag().contains("Energy")) {
+        ItemEnergy data = container.get(mcjty.lib.setup.Registration.ITEM_ENERGY);
+        if  (data == null) {
             return 0;
         }
-        return container.getTag().getInt("Energy");
+        return data.energy();
     }
 
     @Override
@@ -120,17 +109,18 @@ public class RadarItem extends Item implements IEnergyItem {
     }
 
     public int extractEnergyNoMax(ItemStack container, int maxExtract, boolean simulate) {
-        if (container.getTag() == null || !container.getTag().contains("Energy")) {
-            return 0;
+        ItemEnergy data = container.get(mcjty.lib.setup.Registration.ITEM_ENERGY);
+        if (data == null) {
+            data = new ItemEnergy(0);
         }
-        int energy = container.getTag().getInt("Energy");
-        int energyExtracted = Math.min(energy, maxExtract);
+        long energy = data.energy();
+        long energyExtracted = Math.min(energy, maxExtract);
 
         if (!simulate) {
             energy -= energyExtracted;
-            container.getTag().putInt("Energy", energy);
+            container.set(mcjty.lib.setup.Registration.ITEM_ENERGY, new ItemEnergy(energy));
         }
-        return energyExtracted;
+        return (int) energyExtracted;
     }
 
 }

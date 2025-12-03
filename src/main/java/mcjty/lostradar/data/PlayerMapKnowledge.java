@@ -1,71 +1,33 @@
 package mcjty.lostradar.data;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mcjty.lostcities.api.ILostChunkInfo;
 import mcjty.lostcities.api.ILostCityInformation;
 import mcjty.lostradar.compat.LostCitiesCompat;
+import mcjty.lostradar.setup.Registration;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PlayerMapKnowledge {
+public record PlayerMapKnowledge(Set<String> knownCategories) {
 
-    private final Set<String> knownCategories = new HashSet<>();
+    public static final Codec<PlayerMapKnowledge> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.list(Codec.STRING).fieldOf("categories").forGetter(s -> new ArrayList<>(s.knownCategories))
+    ).apply(instance, list -> new PlayerMapKnowledge(new HashSet<>(list))));
 
-    private static final Codec<Set<String>> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.list(Codec.STRING).fieldOf("categories").forGetter(s -> new ArrayList<>(s))
-    ).apply(instance, HashSet::new));
-
-    public PlayerMapKnowledge() {
-    }
-
-    public Set<String> getKnownCategories() {
-        return knownCategories;
-    }
-
-    public Tag saveNBTData() {
-        DataResult<Tag> result = CODEC.encodeStart(NbtOps.INSTANCE, knownCategories);
-        return result.result().orElseThrow(() -> new IllegalStateException("Failed to encode palette"));
-    }
-
-    public void loadNBTData(Tag tag) {
-        CODEC.decode(NbtOps.INSTANCE, tag)
-                .resultOrPartial(error -> {
-                    throw new IllegalStateException("Failed to decode palette: " + error);
-                })
-                .ifPresent(palette -> {
-                    this.knownCategories.clear();
-                    this.knownCategories.addAll(palette.getFirst());
-                });
-    }
-
-    public void copyFrom(PlayerMapKnowledge oldStore) {
-        this.knownCategories.clear();
-        this.knownCategories.addAll(oldStore.knownCategories);
-    }
-
-    public static void register(RegisterCapabilitiesEvent event) {
-        event.register(PlayerMapKnowledge.class);
-    }
+    public static final PlayerMapKnowledge DEFAULT = new PlayerMapKnowledge(new HashSet<>());
 
     private static final Component DEFAULT_NAME = Component.literal("@");
     private static final CommandSource EMPTY = new CommandSource() {
@@ -89,6 +51,12 @@ public class PlayerMapKnowledge {
         }
     };
 
+    public PlayerMapKnowledge addCategory(String category) {
+        Set<String> categories = new HashSet<>(knownCategories);
+        categories.add(category);
+        return new PlayerMapKnowledge(categories);
+    }
+
     public void tick(ServerPlayer player) {
         ILostCityInformation lostInfo = LostCitiesCompat.lostCities.getLostInfo(player.level());
         if (lostInfo != null) {
@@ -101,6 +69,7 @@ public class PlayerMapKnowledge {
                     MapPalette.PaletteEntry entry = cache.getEntryForBuilding(buildingId);
                     if (entry != null) {
                         if (knownCategories.add(entry.name())) {
+                            player.setData(Registration.PLAYER_KNOWLEDGE, new PlayerMapKnowledge(knownCategories));
                             if (!entry.commands().isEmpty()) {
                                 MinecraftServer server = player.server;
                                 CommandSourceStack stack = new CommandSourceStack(EMPTY, Vec3.atCenterOf(player.blockPosition()), Vec2.ZERO, (ServerLevel) player.level(), 2,

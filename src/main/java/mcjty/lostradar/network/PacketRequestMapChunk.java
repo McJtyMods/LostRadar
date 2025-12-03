@@ -1,39 +1,35 @@
 package mcjty.lostradar.network;
 
-import mcjty.lib.network.CustomPacketPayload;
-import mcjty.lib.network.PlayPayloadContext;
 import mcjty.lostradar.LostRadar;
 import mcjty.lostradar.data.EntryPos;
 import mcjty.lostradar.data.ServerMapData;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.ChunkPos;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record PacketRequestMapChunk(EntryPos pos) implements CustomPacketPayload {
 
-    public static ResourceLocation ID = new ResourceLocation(LostRadar.MODID, "requestmapchunk");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(LostRadar.MODID, "requestmapchunk");
+    public static final Type<PacketRequestMapChunk> TYPE = new Type<>(ID);
 
-    public static PacketRequestMapChunk create(FriendlyByteBuf buf) {
-        EntryPos pos = EntryPos.STREAM_CODEC.decode(buf);
-        return new PacketRequestMapChunk(pos);
-    }
-
-    @Override
-    public void write(FriendlyByteBuf buf) {
-        EntryPos.STREAM_CODEC.encode(buf, pos);
-    }
+    public static final StreamCodec<RegistryFriendlyByteBuf, PacketRequestMapChunk> CODEC = StreamCodec.composite(
+            EntryPos.STREAM_CODEC, PacketRequestMapChunk::pos,
+            PacketRequestMapChunk::new
+    );
 
     @Override
-    public ResourceLocation id() {
-        return ID;
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public void handle(PlayPayloadContext ctx) {
-        ctx.workHandler().submitAsync(() -> {
-            ctx.player().ifPresent(player -> {
-                ServerMapData mapData = ServerMapData.getData(player.level());
-                mapData.requestMapChunk(player.level(), pos);
-            });
+    public void handle(IPayloadContext ctx) {
+        ctx.enqueueWork(() -> {
+            var player = ctx.player();
+            var level = player.getCommandSenderWorld();
+            ServerMapData mapData = ServerMapData.getData(level);
+            mapData.requestMapChunk(level, pos);
         });
     }
 }

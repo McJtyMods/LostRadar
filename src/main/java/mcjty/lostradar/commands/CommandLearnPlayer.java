@@ -8,12 +8,12 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import mcjty.lostradar.data.MapPalette;
 import mcjty.lostradar.data.PaletteCache;
-import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
+import mcjty.lostradar.data.PlayerMapKnowledge;
+import mcjty.lostradar.setup.Registration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nonnull;
@@ -36,10 +36,9 @@ public class CommandLearnPlayer {
         ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
         String category = context.getArgument("category", String.class);
 
-        PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(targetPlayer).ifPresent(handler -> {
-            handler.getKnownCategories().add(category);
-        });
-
+        PlayerMapKnowledge data = targetPlayer.getData(Registration.PLAYER_KNOWLEDGE);
+        data =  data.addCategory(category);
+        targetPlayer.setData(Registration.PLAYER_KNOWLEDGE, data);
         return 0;
     }
 

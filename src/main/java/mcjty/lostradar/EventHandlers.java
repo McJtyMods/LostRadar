@@ -3,20 +3,17 @@ package mcjty.lostradar;
 import mcjty.lostradar.commands.ModCommands;
 import mcjty.lostradar.data.PaletteCache;
 import mcjty.lostradar.data.PlayerMapKnowledge;
-import mcjty.lostradar.data.PlayerMapKnowledgeDispatcher;
 import mcjty.lostradar.data.ServerMapData;
-import mcjty.lostradar.setup.ModSetup;
+import mcjty.lostradar.setup.Registration;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public class EventHandlers {
 
@@ -25,43 +22,17 @@ public class EventHandlers {
         ModCommands.register(event.getDispatcher());
     }
 
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        PlayerMapKnowledge.register(event);
-    }
-
     private int tickCounter = 10;
     @SubscribeEvent
-    public void onPlayerTickEvent(TickEvent.PlayerTickEvent event) {
-        if (event.phase == TickEvent.Phase.START && !event.player.getCommandSenderWorld().isClientSide) {
+    public void onPlayerTickEvent(PlayerTickEvent.Pre event) {
+        Player player = event.getEntity();
+        if (player instanceof ServerPlayer serverPlayer) {
             tickCounter--;
             if (tickCounter > 0) {
                 return;
             }
-            PlayerMapKnowledgeDispatcher.getPlayerMapKnowledge(event.player).ifPresent(handler -> handler.tick((ServerPlayer) event.player));
-        }
-    }
-
-    @SubscribeEvent
-    public void onEntityConstructing(AttachCapabilitiesEvent<Entity> event){
-        if (event.getObject() instanceof Player) {
-            if (!event.getCapabilities().containsKey(ModSetup.PLAYER_KNOWLEDGE) && !event.getObject().getCapability(ModSetup.PLAYER_KNOWLEDGE).isPresent()) {
-                event.addCapability(ModSetup.PLAYER_KNOWLEDGE_KEY, new PlayerMapKnowledgeDispatcher());
-            } else {
-                throw new IllegalStateException(event.getObject().toString());
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onPlayerCloned(PlayerEvent.Clone event) {
-        if (event.isWasDeath()) {
-            // We need to copyFrom the capabilities
-            event.getOriginal().getCapability(ModSetup.PLAYER_KNOWLEDGE).ifPresent(oldStore -> {
-                event.getEntity().getCapability(ModSetup.PLAYER_KNOWLEDGE).ifPresent(newStore -> {
-                    newStore.copyFrom(oldStore);
-                });
-            });
+            PlayerMapKnowledge data = player.getData(Registration.PLAYER_KNOWLEDGE);
+            data.tick(serverPlayer);
         }
     }
 
@@ -78,10 +49,8 @@ public class EventHandlers {
     }
 
     @SubscribeEvent
-    public void onLevelTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            ServerLevel overworld = event.getServer().overworld();
-            ServerMapData.getData(overworld).tickSearch(overworld);
-        }
+    public void onLevelTick(ServerTickEvent.Pre event) {
+        ServerLevel overworld = event.getServer().overworld();
+        ServerMapData.getData(overworld).tickSearch(overworld);
     }
 }
