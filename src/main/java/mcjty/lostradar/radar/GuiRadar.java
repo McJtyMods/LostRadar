@@ -126,7 +126,7 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         int startZ = borderTop + (MAP_DIM) * MAPCELL_SIZE;
         MapDecoration playerDecoration = new MapDecoration(MapDecorationTypes.PLAYER, (byte)0, (byte)0, (byte)0, Optional.empty());
         TextureAtlasSprite playerSprite = Minecraft.getInstance().getMapDecorationTextures().get(playerDecoration);
-        drawRotatedIcon(graphics, startX + 2, startZ + 2, 16, angle, playerSprite, 0, 0, 16, 16);
+        drawRotatedIcon(graphics, startX + 2, startZ + 2, 16, angle, playerSprite, 16, 16);
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         for (Icon icon : icons) {
@@ -134,28 +134,28 @@ public class GuiRadar extends GuiItemScreen implements IKeyReceiver {
         }
     }
 
-    private static void drawRotatedIcon(GuiGraphics graphics, int centerX, int centerY, int size, double angle, TextureAtlasSprite texture, int u, int v, int w, int h) {
+    private static void drawRotatedIcon(GuiGraphics graphics, int centerX, int centerY, int size, double angle, TextureAtlasSprite texture, int w, int h) {
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
         poseStack.translate(centerX, centerY, 0);
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) angle));
         poseStack.translate(-centerX, -centerY, 0);
-        RenderSystem.setShaderTexture(0, MAP_ICONS_LOCATION);
-        drawTexturedModalRect(poseStack, texture, centerX - size / 2, centerY - size / 2, u, v, w, h);
+        RenderSystem.setShaderTexture(0, ResourceLocation.withDefaultNamespace("textures/atlas/map_decorations.png"));
+        drawTexturedModalRect(poseStack, texture, centerX - size / 2, centerY - size / 2, w, h);
         poseStack.popPose();
     }
 
-    private static void drawTexturedModalRect(PoseStack poseStack, TextureAtlasSprite texture, int x, int y, int u, int v, int width, int height) {
+    private static void drawTexturedModalRect(PoseStack poseStack, TextureAtlasSprite texture, int x, int y, int width, int height) {
         Matrix4f matrix = poseStack.last().pose();
         float zLevel = 0.01f;
         float f = (1 / 256.0f);
         float f1 = (1 / 256.0f);
         Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder buffer = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.addVertex(matrix, (x + 0), (y + height), zLevel).setUv(((u + 0) * f), ((v + height) * f1));
-        buffer.addVertex(matrix, (x + width), (y + height), zLevel).setUv(((u + width) * f), ((v + height) * f1));
-        buffer.addVertex(matrix, (x + width), (y + 0), zLevel).setUv(((u + width) * f), ((v + 0) * f1));
-        buffer.addVertex(matrix, (x + 0), (y + 0), zLevel).setUv(((u + 0) * f), ((v + 0) * f1));
+        buffer.addVertex(matrix, (x + 0), (y + height), zLevel).setUv(texture.getU0(), texture.getV1());
+        buffer.addVertex(matrix, (x + width), (y + height), zLevel).setUv(texture.getU1(), texture.getV1());
+        buffer.addVertex(matrix, (x + width), (y + 0), zLevel).setUv(texture.getU1(), texture.getV0());
+        buffer.addVertex(matrix, (x + 0), (y + 0), zLevel).setUv(texture.getU0(), texture.getV0());
         BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
