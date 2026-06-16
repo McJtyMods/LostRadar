@@ -24,7 +24,7 @@ Find the cities
 [[dependencies.lostradar]]
     modId="mcjtylib"
     mandatory=true
-    versionRange="[1.20-8.0.4,)"
+    versionRange="[1.20-8.0.7,)"
     ordering="AFTER"
     side="BOTH"
 [[dependencies.lostradar]]
